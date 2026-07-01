@@ -153,4 +153,4 @@ node --test
 
 ## License
 
-MIT
+One More Game
