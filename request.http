@@ -1,5 +1,3 @@
-
-
 @host = http://localhost:3002
 @baseUrl = {{host}}/api
 
@@ -34,9 +32,10 @@ POST {{baseUrl}}/transactions
 Content-Type: application/json
 
 {
-  "fromAddress": "alice",
-  "toAddress": "charlie",
-  "amount": 25
+  "fromAddress": "3056301006072a8648ce3d020106052b8104000a03420004b601085afa97744664bb78ae952bcf982aaf97315c7cbc9fb5e86836816972f31d0cd1003cc324808a5b518b7d27c53e6b256525f07ce20540e5473e9395efd0",
+  "toAddress": "3056301006072a8648ce3d020106052b8104000a034200042794a32c99af2d8cd3890f108d3b5dbabf73f6e23ae99ea68613e0716c0bd3733f4a6f4e35e842a61d08ca33f548b189628fb9f1f4bc50c7a86aea6218968016",
+  "amount": 25,
+  "signature": "3046022100b8fdced49cb3998e0f67fa000e7e34ca2fa2f56dfc018615cc431b2fe3c4a98e0221009147b6ed9afef69acc95eae1ccc2d96aa15b159f20ae27d36775cbb97648e1d1"
 }
 
 ### -----------------------------------------------------------------
@@ -69,3 +68,13 @@ POST {{baseUrl}}/wallets
 ### Wallet Details
 @USER2=address2
 GET {{baseUrl}}/wallets/{{USER2}}
+
+### -----------------------------------------------------------------
+### Local Signature Generation Helper
+### -----------------------------------------------------------------
+### REST Client cannot sign locally by itself.
+### Run this from the project root after replacing the values:
+###
+### node -e 'const { signTransactionPayload } = require("./controllers/wallet.controller"); const signature = signTransactionPayload({ fromAddress: "PASTE_FROM_WALLET_PUBLIC_KEY_HEX_HERE", toAddress: "PASTE_TO_WALLET_PUBLIC_KEY_HEX_HERE", amount: 25, privateKey: `PASTE_PRIVATE_KEY_PEM_HERE` }); console.log(signature);'
+###
+### Then paste the printed signature into the Create Transaction request above.

@@ -16,7 +16,7 @@ class Block {
         this.previousHash +
           this.timestamp +
           JSON.stringify(this.transactions) +
-          this.nonce
+          this.nonce,
       )
       .digest('hex');
   }
@@ -32,10 +32,22 @@ class Block {
 
   hasValidTransactions() {
     for (const tx of this.transactions) {
-      if (!tx.isValid()) {
+      const transaction =
+        tx instanceof Transaction
+          ? tx
+          : Object.assign(
+              new Transaction(tx.fromAddress, tx.toAddress, tx.amount),
+              {
+                timestamp: tx.timestamp,
+                signature: tx.signature || '',
+              },
+            );
+
+      if (!transaction.isValid()) {
         return false;
       }
     }
+
     return true;
   }
 }
@@ -49,10 +61,14 @@ class Transaction {
     this.signature = '';
   }
 
+  getSigningPayload() {
+    return `${this.fromAddress}${this.toAddress}${this.amount}`;
+  }
+
   calculateHash() {
     return crypto
       .createHash('sha256')
-      .update(this.fromAddress + this.toAddress + this.amount + this.timestamp)
+      .update(this.getSigningPayload())
       .digest('hex');
   }
 
@@ -62,13 +78,15 @@ class Transaction {
       const publicKeyDer = publicKey.export({ type: 'spki', format: 'der' });
       const publicKeyHex = publicKeyDer.toString('hex');
 
-      if (this.fromAddress && this.fromAddress !== publicKeyHex && this.fromAddress.length > 0) {
-        this.fromAddress = publicKeyHex;
-      } else {
-        this.fromAddress = publicKeyHex;
+      if (this.fromAddress !== publicKeyHex) {
+        throw new Error('You cannot sign transactions for other wallets');
       }
-      const hashTx = this.calculateHash();
-      const signature = crypto.sign(null, Buffer.from(hashTx), signingKey);
+
+      const signature = crypto.sign(
+        'SHA256',
+        Buffer.from(this.getSigningPayload()),
+        signingKey,
+      );
       this.signature = signature.toString('hex');
     } catch (error) {
       throw new Error(`Unable to sign transaction: ${error.message}`);
@@ -90,10 +108,10 @@ class Transaction {
       });
 
       return crypto.verify(
-        null,
-        Buffer.from(this.calculateHash()),
+        'SHA256',
+        Buffer.from(this.getSigningPayload()),
         publicKey,
-        Buffer.from(this.signature, 'hex')
+        Buffer.from(this.signature, 'hex'),
       );
     } catch {
       return false;
@@ -118,13 +136,17 @@ class Blockchain {
   }
 
   minePendingTransactions(miningRewardAddress) {
-    const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+    const rewardTx = new Transaction(
+      null,
+      miningRewardAddress,
+      this.miningReward,
+    );
     this.pendingTransactions.push(rewardTx);
 
     const block = new Block(
       Date.now(),
       this.pendingTransactions,
-      this.getLatestBlock().hash
+      this.getLatestBlock().hash,
     );
     block.mineBlock(this.difficulty);
 
@@ -159,7 +181,20 @@ class Blockchain {
 
   isChainValid() {
     for (let i = 1; i < this.chain.length; i++) {
-      const current = this.chain[i];
+      const current =
+        this.chain[i] instanceof Block
+          ? this.chain[i]
+          : Object.assign(
+              new Block(
+                this.chain[i].timestamp,
+                this.chain[i].transactions || [],
+                this.chain[i].previousHash,
+              ),
+              {
+                nonce: this.chain[i].nonce,
+                hash: this.chain[i].hash,
+              },
+            );
       const previous = this.chain[i - 1];
 
       if (!current.hasValidTransactions()) return false;

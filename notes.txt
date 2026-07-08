@@ -1,0 +1,123 @@
+you’re using Node.js:
+```
+crypto.sign('SHA256', Buffer.from(message), privateKey)
+```
+with an EC key (secp256k1).
+
+By default, Node/OpenSSL uses randomized ECDSA (RFC 3279/OpenSSL behavior), which means each signature uses a fresh random nonce k.
+
+For ECDSA verification, you do not recover the public key from (sig, msg).
+
+So even if the message is identical:
+```
+Message = "from + to + amount"
+```
+
+you might get
+```
+Signature #1
+3045022100c1fa34...
+
+Signature #2
+304502205b7bdc...
+```
+
+Both signatures are valid.
+
+The verifier only checks:
+
+```
+verify(message, signature1, publicKey) == true
+verify(message, signature2, publicKey) == true
+```
+
+not that the signature bytes are identical.
+-------------------------------------------------------
+Why?
+ECDSA mathematically signs using
+```
+(r, s)
+```
+
+where
+
+```
+r = f(k)
+s = (H(m) + r*d) / k
+```
+k is an ephemeral nonce.
+
+If k changes, (r, s) changes.
+
+---
+Bitcoin uses RFC 6979 deterministic ECDSA, where
+```
+k = H(privateKey, message)
+```
+instead of being randomly generated.
+
+Therefore,
+```
+same message
++
+same private key
+=
+same signature
+```
+every time.
+
+---
+
+What about Node’s crypto.sign()?
+
+By default it relies on OpenSSL’s ECDSA implementation. Depending on the OpenSSL version and provider configuration, it is not guaranteed to produce the same signature for identical inputs. Therefore, your test should not compare the raw signature bytes.
+
+Instead, the correct test is:
+```
+const sig1 = signTransactionPayload(...);
+const sig2 = signTransactionPayload(...);
+
+expect(transaction1.isValid()).toBe(true);
+expect(transaction2.isValid()).toBe(true);
+```
+not 
+```
+expect(sig1).toBe(sig2); // ❌ Incorrect assumption
+```
+-------------------------------------------------------
+The correct model is:
+```
+(pubkey_expected, msg, sig) -> true/false
+```
+
+Not:
+```
+(sig, msg) -> pubkey_actual
+```
+
+That recovery-style flow exists in Ethereum-style signatures, where the signature includes recovery info v:
+```
+(sig, msg) -> recovered_pubkey/address
+recovered_address == expected_address
+```
+
+But your current Node.js crypto.sign/verify flow is normal ECDSA verification:
+```
+crypto.verify(
+  'SHA256',
+  Buffer.from(transaction.calculateHash()),
+  publicKey,
+  Buffer.from(signature, 'hex'),
+)
+```
+
+So in your app:
+```
+fromAddress = expected public key
+signature = proof that fromAddress signed from + to + amount
+```
+
+Correct check:
+```
+verify(fromAddress_public_key, tx_hash, signature) == true
+```

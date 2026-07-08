@@ -8,17 +8,32 @@ const useBlockchain = (pollInterval = POLL_INTERVAL_MS) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const intervalRef = useRef(null);
+  const latestRefreshIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const refreshId = latestRefreshIdRef.current + 1;
+    latestRefreshIdRef.current = refreshId;
+
     try {
       const { chainData, statsData } = await fetchDashboard();
+
+      if (refreshId !== latestRefreshIdRef.current) {
+        return;
+      }
+
       setChain(chainData);
       setStats(statsData);
       setError(null);
     } catch (err) {
+      if (refreshId !== latestRefreshIdRef.current) {
+        return;
+      }
+
       setError(err.message || 'Failed to connect to the blockchain API.');
     } finally {
-      setLoading(false);
+      if (refreshId === latestRefreshIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

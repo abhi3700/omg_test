@@ -6,7 +6,7 @@ const { Blockchain, Block, Transaction } = require('./blockchain');
 
 let blockchain = new Blockchain(
   config.blockchain.difficulty,
-  config.blockchain.miningReward
+  config.blockchain.miningReward,
 );
 
 const seedDemoData = () => {
@@ -14,10 +14,17 @@ const seedDemoData = () => {
     return;
   }
 
-  for (const { from, to, amount } of config.demoData.transactions) {
+  for (const { to, amount } of config.demoData.transactions) {
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', {
+      namedCurve: 'secp256k1',
+    });
+
+    const from = publicKey
+      .export({ type: 'spki', format: 'der' })
+      .toString('hex');
     const demoTx = new Transaction(from, to, amount);
-    const { privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
-    demoTx.signTransaction(privateKey);
+
+    demoTx.signTransaction(privateKey.export({ type: 'pkcs8', format: 'pem' }));
     blockchain.addTransaction(demoTx);
   }
 
