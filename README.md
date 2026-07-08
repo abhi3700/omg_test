@@ -36,9 +36,9 @@ It combines:
 
 ## Documentation
 
-- 📘 User Guide — [docs/UserGuide.md](docs/UserGuide.md)
+- 📘 [User Guide](#user-guide)
 - 🧪 Transaction lifecycle example — `npm run example:tx-lifecycle`
-- 📄 API Overview — see the API Overview section below
+- 📄 API Overview — see the API Overview section [below](#api-overview).
 
 ---
 
@@ -283,6 +283,8 @@ All API responses follow this pattern:
 ```json
 { "success": true, "message": "...", ... }
 ```
+
+Try [here](./request.http) ↗️.
 
 ### Core endpoints
 
