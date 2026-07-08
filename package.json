@@ -7,10 +7,15 @@
     "start": "react-scripts start",
     "server": "node server.js",
     "dev": "nodemon server.js",
+    "example:tx-lifecycle": "node examples/tx-lifecycle.js",
     "build": "react-scripts build",
     "serve": "npm run build && npm run server",
     "prod": "npm run serve",
-    "lint": "eslint src --ext .js,.jsx"
+    "lint": "eslint src --ext .js,.jsx",
+    "test": "node --test tests/*.test.js",
+    "test:wallet": "node --test tests/wallet.controller.test.js",
+    "test:blockchain": "node --test tests/blockchain.test.js",
+    "test:node": "node --test tests/*.test.js"
   },
   "keywords": [
     "blockchain",
@@ -34,6 +39,7 @@
     "request": "^2.88.2"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
     "nodemon": "^3.0.1"
   },
   "eslintConfig": {

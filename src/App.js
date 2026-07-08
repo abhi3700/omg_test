@@ -14,12 +14,8 @@ function App() {
   const { chain, stats, loading, error, refresh } = useBlockchain();
 
   const handleMine = async () => {
-    try {
-      await mineBlock();
-      await refresh();
-    } catch (err) {
-      console.error('Mining failed:', err.message);
-    }
+    await mineBlock();
+    await refresh();
   };
 
   if (loading) {

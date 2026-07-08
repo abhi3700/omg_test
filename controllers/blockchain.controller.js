@@ -1,7 +1,9 @@
-const { blockchain } = require('../models');
+const models = require('../models');
 const { sendSuccess } = require('../utils/response');
 
 const getChain = (req, res) => {
+  const blockchain = models.blockchain;
+
   sendSuccess(res, {
     chain: blockchain.chain,
     length: blockchain.chain.length,
@@ -9,6 +11,8 @@ const getChain = (req, res) => {
 };
 
 const validateChain = (req, res) => {
+  const blockchain = models.blockchain;
+
   sendSuccess(res, { isValid: blockchain.isChainValid() });
 };
 
