@@ -60,6 +60,7 @@ const server = app.listen(config.port, () => {
   logger.sysinfo(`Environment : ${config.env}`);
   logger.info(`Server      : http://localhost:${config.port}`);
   logger.info(`API         : http://localhost:${config.port}/api`);
+  logger.info(`Health      : http://localhost:${config.port}/health`);
 });
 
 server.on('error', (err) => {
