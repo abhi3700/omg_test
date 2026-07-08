@@ -138,6 +138,144 @@ The User Guide covers the main blockchain explorer workflow, including wallet cr
 
 ---
 
+## Architecture
+
+The project follows a layered architecture where the frontend triggers blockchain actions through REST APIs, while the backend keeps the core blockchain rules inside the domain model.
+
+```text
+Frontend Explorer UI
+   |
+   | HTTP / REST
+   v
+Express Backend
+   |
+   +-- Routes Layer
+   |     - chain routes
+   |     - transaction routes
+   |     - mining routes
+   |     - wallet routes
+   |
+   +-- Controllers Layer
+   |     - validate request input
+   |     - sanitize transaction data
+   |     - build transaction payloads
+   |     - return API-friendly responses
+   |
+   +-- Domain Model Layer
+   |     - Blockchain
+   |     - Block
+   |     - Transaction
+   |
+   +-- Persistence Layer
+         - save blockchain state
+         - restore blockchain state after restart
+```
+
+### Transaction lifecycle
+
+```text
+Create Transaction
+   |
+   v
+Validate and sanitize request data
+   |
+   v
+Build Transaction object
+   |
+   v
+Verify transaction signature
+   |
+   v
+Add transaction to pendingTransactions
+   |
+   v
+Persist blockchain state
+```
+
+A transaction is not added directly to a block. It first enters the pending transaction pool. Mining is the only step that moves pending transactions into a confirmed block.
+
+### Mining lifecycle
+
+```text
+Mine Block
+   |
+   v
+Check pendingTransactions.length
+   |
+   +-- if 0
+   |     return a clear no-pending-transactions response
+   |
+   +-- if > 0
+         create a new block
+         include pending transactions
+         add miner reward
+         run proof-of-work mining
+         append block to chain
+         clear pendingTransactions
+         persist blockchain state
+```
+
+### Low-level components
+
+#### Transaction
+
+Represents a signed transfer between two wallet addresses.
+
+Responsibilities:
+
+- build a deterministic signing payload
+- calculate the transaction hash
+- sign the transaction with a private key
+- verify the signature against the sender address
+- reject unsigned or tampered transactions
+
+#### Block
+
+Represents a mined collection of transactions.
+
+Responsibilities:
+
+- store transactions
+- reference the previous block hash
+- calculate the block hash
+- run proof-of-work mining
+- verify all transactions inside the block
+
+#### Blockchain
+
+Owns the current chain state and pending transaction pool.
+
+Responsibilities:
+
+- create the genesis block
+- add only valid transactions to pending transactions
+- mine pending transactions into a new block
+- calculate wallet balances
+- validate chain integrity
+- expose serializable state for persistence
+
+#### Persistence service
+
+Saves and restores blockchain state from disk.
+
+Responsibilities:
+
+- persist chain state after important mutations
+- restore blocks and transactions as class instances
+- preserve pending transactions across server restarts
+
+### Design rule
+
+```text
+Controller validates input.
+Model enforces blockchain rules.
+Persistence saves and restores state.
+Frontend displays state and triggers actions.
+Mining converts pending transactions into confirmed block transactions.
+```
+
+---
+
 ## API Overview
 
 All API responses follow this pattern:
