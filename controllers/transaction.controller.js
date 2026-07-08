@@ -47,6 +47,8 @@ const addTransaction = async (req, res, next) => {
     sendCreated(res, {
       message: 'Transaction added to pending pool',
       transaction,
+      pendingTransactions: blockchain.pendingTransactions,
+      pendingCount: blockchain.pendingTransactions.length,
     });
   } catch (err) {
     return sendError(res, err.message || 'Failed to create transaction', 400);

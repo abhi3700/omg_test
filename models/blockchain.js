@@ -136,16 +136,22 @@ class Blockchain {
   }
 
   minePendingTransactions(miningRewardAddress) {
+    // NOTE: Prevent mining when no pending txs.
+    if (this.pendingTransactions.length === 0) {
+      throw new Error('No pending transactions to mine');
+    }
+
     const rewardTx = new Transaction(
       null,
       miningRewardAddress,
       this.miningReward,
     );
-    this.pendingTransactions.push(rewardTx);
+
+    const transactionsToMine = [...this.pendingTransactions, rewardTx];
 
     const block = new Block(
       Date.now(),
-      this.pendingTransactions,
+      transactionsToMine,
       this.getLatestBlock().hash,
     );
     block.mineBlock(this.difficulty);

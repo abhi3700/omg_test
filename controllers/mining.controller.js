@@ -10,6 +10,15 @@ const mineBlock = async (req, res, next) => {
     const blockchain = models.blockchain;
 
     logger.info(`Mining block for reward address: ${miningRewardAddress}`);
+
+    // NOTE: Prevent mining when no pending txs.
+    if (blockchain.pendingTransactions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No pending transactions to mine',
+      });
+    }
+
     blockchain.minePendingTransactions(miningRewardAddress);
     await persistenceService.save(blockchain);
     logger.info(
@@ -19,7 +28,10 @@ const mineBlock = async (req, res, next) => {
     sendSuccess(res, {
       message: 'Block mined successfully',
       latestBlock: blockchain.getLatestBlock(),
+      chain: blockchain.chain,
       chainLength: blockchain.chain.length,
+      pendingTransactions: blockchain.pendingTransactions,
+      pendingCount: blockchain.pendingTransactions.length,
     });
   } catch (err) {
     next(err);
