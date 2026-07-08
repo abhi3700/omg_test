@@ -3,6 +3,7 @@
 This repository is a multi-track assessment project for candidates applying to roles in blockchain engineering, smart contract engineering, and full-stack Web3 development.
 
 It combines:
+
 - a layered Express backend for a simplified blockchain
 - a React-based explorer for interacting with the chain
 - a Solidity smart contract example for assessment and deployment discussion
@@ -13,18 +14,21 @@ It combines:
 ## What’s Included
 
 ### Backend
+
 - Express API with routes for chain, transactions, mining, balance, stats, and wallets
 - Blockchain domain model with block hashing, transaction validation, and mining logic
 - Persistence layer that saves blockchain state to a JSON file
 - Centralized middleware for error handling, logging, validation, and rate limiting
 
 ### Frontend
+
 - React dashboard to view blockchain state and mine blocks
 - Wallet creation panel for generating key material and checking balances
 - Transaction form for creating new pending transactions
 - Polling-based refresh for near-real-time updates
 
 ### Smart Contracts
+
 - Solidity contract example in [contracts/AssessmentToken.sol](contracts/AssessmentToken.sol)
 - Deployment script in [scripts/deploy-contract.js](scripts/deploy-contract.js)
 
@@ -54,6 +58,7 @@ hometask-blockchain/
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - npm
 
@@ -122,6 +127,7 @@ All API responses follow this pattern:
 ## Smart Contract Notes
 
 The Solidity contract in [contracts/AssessmentToken.sol](contracts/AssessmentToken.sol) is a simple ERC-20-style token example. It demonstrates:
+
 - token supply initialization
 - balance tracking
 - transfer and approval flows
