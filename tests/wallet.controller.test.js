@@ -72,20 +72,20 @@ describe('wallet.controller transaction signing helpers', () => {
       privateKey: fromWallet.privateKeyPem,
     });
 
-    // For log.
-    console.log('\nCreate transaction payload for request.http:');
-    console.log(
-      JSON.stringify(
-        {
-          fromAddress: fromWallet.publicKeyHex,
-          toAddress: toWallet.publicKeyHex,
-          amount,
-          signature,
-        },
-        null,
-        2,
-      ),
-    );
+    // For log to use as payload for tx create in "request.http" file.
+    // console.log('\nCreate transaction payload for request.http:');
+    // console.log(
+    //   JSON.stringify(
+    //     {
+    //       fromAddress: fromWallet.publicKeyHex,
+    //       toAddress: toWallet.publicKeyHex,
+    //       amount,
+    //       signature,
+    //     },
+    //     null,
+    //     2,
+    //   ),
+    // );
 
     const { Transaction } = require('../models/blockchain');
     const transaction = new Transaction(
