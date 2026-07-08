@@ -34,6 +34,14 @@ It combines:
 
 ---
 
+## Documentation
+
+- 📘 User Guide — [docs/UserGuide.md](docs/UserGuide.md)
+- 🧪 Transaction lifecycle example — `npm run example:tx-lifecycle`
+- 📄 API Overview — see the API Overview section below
+
+---
+
 ## Project Structure
 
 ```text
@@ -41,6 +49,7 @@ hometask-blockchain/
 ├── config/
 ├── controllers/
 ├── contracts/
+├── examples/
 ├── middleware/
 ├── models/
 ├── routes/
@@ -97,6 +106,35 @@ npm run dev
 ```
 
 The React app uses the proxy in [src/setupProxy.js](src/setupProxy.js) so browser requests to /api are forwarded to the backend.
+
+---
+
+### Run the examples
+
+The repository includes end-to-end example scripts that demonstrate common blockchain workflows using the REST API.
+
+Run the transaction lifecycle example:
+
+```bash
+npm run example:tx-lifecycle
+```
+
+This example walks through:
+
+- checking API health
+- creating wallets
+- signing and submitting a transaction
+- inspecting pending transactions
+- mining a block
+- verifying updated balances
+
+---
+
+## User Guide
+
+New to the project? Start [here](res/user_guide.excalidraw) ↗️.
+
+The User Guide covers the main blockchain explorer workflow, including wallet creation, transaction submission, mining, blockchain state inspection, and common troubleshooting.
 
 ---
 
