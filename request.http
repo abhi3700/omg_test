@@ -7,27 +7,19 @@
 GET {{baseUrl}}
 
 ### -----------------------------------------------------------------
-### Health Check
-### -----------------------------------------------------------------
-GET {{host}}/health
-
-### -----------------------------------------------------------------
 ### Blockchain
 ### -----------------------------------------------------------------
+
+### Return the full blockchain
 GET {{baseUrl}}/chain
 
-### Validate Blockchain
+### Return whether the chain is valid
 GET {{baseUrl}}/chain/valid
 
 ### -----------------------------------------------------------------
 ### Transactions
 ### -----------------------------------------------------------------
-GET {{baseUrl}}/transactions
-
-### Pending Transactions
-GET {{baseUrl}}/transactions/pending
-
-### Create Transaction
+### Add a pending transaction
 POST {{baseUrl}}/transactions
 Content-Type: application/json
 
@@ -38,9 +30,16 @@ Content-Type: application/json
   "signature": "3046022100b8fdced49cb3998e0f67fa000e7e34ca2fa2f56dfc018615cc431b2fe3c4a98e0221009147b6ed9afef69acc95eae1ccc2d96aa15b159f20ae27d36775cbb97648e1d1"
 }
 
+### View pending transactions
+GET {{baseUrl}}/transactions/pending
+
+### View confirmed transactions
+GET {{baseUrl}}/transactions
+
 ### -----------------------------------------------------------------
 ### Mining
 ### -----------------------------------------------------------------
+### Mine the pending transactions
 POST {{baseUrl}}/mine
 Content-Type: application/json
 
@@ -51,30 +50,22 @@ Content-Type: application/json
 ### -----------------------------------------------------------------
 ### Balance
 ### -----------------------------------------------------------------
+### Get an address balance
 @USER1=address1
 GET {{baseUrl}}/balance/{{USER1}}
 
 ### -----------------------------------------------------------------
 ### Statistics
 ### -----------------------------------------------------------------
+### View chain and mining statistics
 GET {{baseUrl}}/stats
 
 ### -----------------------------------------------------------------
 ### Wallets
 ### -----------------------------------------------------------------
-### Create Wallet
+### Generate a wallet-like key pair
 POST {{baseUrl}}/wallets
 
-### Wallet Details
+### View a balance for a wallet address
 @USER2=address2
 GET {{baseUrl}}/wallets/{{USER2}}
-
-### -----------------------------------------------------------------
-### Local Signature Generation Helper
-### -----------------------------------------------------------------
-### REST Client cannot sign locally by itself.
-### Run this from the project root after replacing the values:
-###
-### node -e 'const { signTransactionPayload } = require("./controllers/wallet.controller"); const signature = signTransactionPayload({ fromAddress: "PASTE_FROM_WALLET_PUBLIC_KEY_HEX_HERE", toAddress: "PASTE_TO_WALLET_PUBLIC_KEY_HEX_HERE", amount: 25, privateKey: `PASTE_PRIVATE_KEY_PEM_HERE` }); console.log(signature);'
-###
-### Then paste the printed signature into the Create Transaction request above.
