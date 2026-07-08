@@ -8,7 +8,10 @@ const { Blockchain, Transaction, Block } = require('../models/blockchain');
 const persistenceService = require('../services/persistence.service');
 
 const originalStatePath = process.env.BLOCKCHAIN_STATE_PATH;
-const testStatePath = path.join(os.tmpdir(), 'initialtest-omg-blockchain-test.json');
+const testStatePath = path.join(
+  os.tmpdir(),
+  'initialtest-omg-blockchain-test.json',
+);
 
 test.beforeEach(async () => {
   process.env.BLOCKCHAIN_STATE_PATH = testStatePath;
@@ -33,8 +36,14 @@ test('rejects unsigned transactions', () => {
 
 test('persists and restores blockchain state', async () => {
   const chain = new Blockchain(1, 10);
-  const tx = new Transaction('wallet-a', 'wallet-b', 25);
-  const { privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
+  const { privateKey, publicKey } = crypto.generateKeyPairSync('ec', {
+    namedCurve: 'secp256k1',
+  });
+  const fromAddress = publicKey
+    .export({ type: 'spki', format: 'der' })
+    .toString('hex');
+  const tx = new Transaction(fromAddress, 'wallet-b', 25);
+
   tx.signTransaction(privateKey);
   chain.addTransaction(tx);
 

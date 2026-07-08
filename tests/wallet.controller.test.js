@@ -1,3 +1,5 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const {
   buildTransactionMessage,
@@ -17,137 +19,138 @@ const generateTestWallet = () => {
   };
 };
 
-describe('wallet.controller transaction signing helpers', () => {
-  test('buildTransactionMessage builds the same signing payload used by Transaction.isValid', () => {
-    const { Transaction } = require('../models/blockchain');
-    const fromWallet = generateTestWallet();
-    const toWallet = generateTestWallet();
-    const amount = 25;
+test('buildTransactionMessage builds the same signing payload used by Transaction.isValid', () => {
+  const { Transaction } = require('../models/blockchain');
+  const fromWallet = generateTestWallet();
+  const toWallet = generateTestWallet();
+  const amount = 25;
 
-    const transaction = new Transaction(
-      fromWallet.publicKeyHex,
-      toWallet.publicKeyHex,
-      amount,
-    );
+  const transaction = new Transaction(
+    fromWallet.publicKeyHex,
+    toWallet.publicKeyHex,
+    amount,
+  );
 
-    const message = buildTransactionMessage(
-      `  ${fromWallet.publicKeyHex}  `,
-      `  ${toWallet.publicKeyHex}  `,
-      amount,
-    );
+  const message = buildTransactionMessage(
+    `  ${fromWallet.publicKeyHex}  `,
+    `  ${toWallet.publicKeyHex}  `,
+    amount,
+  );
 
-    expect(message).toBe(transaction.getSigningPayload());
-    expect(transaction.calculateHash()).toBe(
-      crypto.createHash('sha256').update(message).digest('hex'),
-    );
+  assert.equal(message, transaction.getSigningPayload());
+  assert.equal(
+    transaction.calculateHash(),
+    crypto.createHash('sha256').update(message).digest('hex'),
+  );
+});
+
+test('signTransactionPayload returns a DER encoded secp256k1 signature as hex', () => {
+  const fromWallet = generateTestWallet();
+  const toWallet = generateTestWallet();
+  const amount = 25;
+
+  const signature = signTransactionPayload({
+    fromAddress: fromWallet.publicKeyHex,
+    toAddress: toWallet.publicKeyHex,
+    amount,
+    privateKey: fromWallet.privateKeyPem,
   });
 
-  test('signTransactionPayload returns a DER encoded secp256k1 signature as hex', () => {
-    const fromWallet = generateTestWallet();
-    const toWallet = generateTestWallet();
-    const amount = 25;
+  assert.match(signature, /^[0-9a-f]+$/);
+  assert.equal(signature.length % 2, 0);
+  assert.ok(signature.length >= 140);
+  assert.ok(signature.length <= 144);
+});
 
-    const signature = signTransactionPayload({
-      fromAddress: fromWallet.publicKeyHex,
-      toAddress: toWallet.publicKeyHex,
-      amount,
-      privateKey: fromWallet.privateKeyPem,
-    });
+test('generated signature verifies against the from wallet public key', () => {
+  const fromWallet = generateTestWallet();
+  const toWallet = generateTestWallet();
+  const amount = 25;
 
-    expect(signature).toMatch(/^[0-9a-f]+$/);
-    expect(signature.length % 2).toBe(0);
-    expect(signature.length).toBeGreaterThanOrEqual(140);
-    expect(signature.length).toBeLessThanOrEqual(144);
+  const signature = signTransactionPayload({
+    fromAddress: fromWallet.publicKeyHex,
+    toAddress: toWallet.publicKeyHex,
+    amount,
+    privateKey: fromWallet.privateKeyPem,
   });
 
-  test('generated signature verifies against the from wallet public key', () => {
-    const fromWallet = generateTestWallet();
-    const toWallet = generateTestWallet();
-    const amount = 25;
+  // For log to use as payload for tx create in "request.http" file.
+  // console.log('\nCreate transaction payload for request.http:');
+  // console.log(
+  //   JSON.stringify(
+  //     {
+  //       fromAddress: fromWallet.publicKeyHex,
+  //       toAddress: toWallet.publicKeyHex,
+  //       amount,
+  //       signature,
+  //     },
+  //     null,
+  //     2,
+  //   ),
+  // );
 
-    const signature = signTransactionPayload({
-      fromAddress: fromWallet.publicKeyHex,
-      toAddress: toWallet.publicKeyHex,
-      amount,
-      privateKey: fromWallet.privateKeyPem,
-    });
+  const { Transaction } = require('../models/blockchain');
+  const transaction = new Transaction(
+    fromWallet.publicKeyHex,
+    toWallet.publicKeyHex,
+    amount,
+  );
+  transaction.signature = signature;
 
-    // For log to use as payload for tx create in "request.http" file.
-    // console.log('\nCreate transaction payload for request.http:');
-    // console.log(
-    //   JSON.stringify(
-    //     {
-    //       fromAddress: fromWallet.publicKeyHex,
-    //       toAddress: toWallet.publicKeyHex,
-    //       amount,
-    //       signature,
-    //     },
-    //     null,
-    //     2,
-    //   ),
-    // );
+  assert.equal(transaction.isValid(), true);
 
-    const { Transaction } = require('../models/blockchain');
-    const transaction = new Transaction(
-      fromWallet.publicKeyHex,
-      toWallet.publicKeyHex,
-      amount,
-    );
-    transaction.signature = signature;
-
-    expect(transaction.isValid()).toBe(true);
-
-    const secondSignature = signTransactionPayload({
-      fromAddress: fromWallet.publicKeyHex,
-      toAddress: toWallet.publicKeyHex,
-      amount,
-      privateKey: fromWallet.privateKeyPem,
-    });
-
-    const secondTransaction = new Transaction(
-      fromWallet.publicKeyHex,
-      toWallet.publicKeyHex,
-      amount,
-    );
-    secondTransaction.signature = secondSignature;
-
-    expect(secondTransaction.isValid()).toBe(true);
+  const secondSignature = signTransactionPayload({
+    fromAddress: fromWallet.publicKeyHex,
+    toAddress: toWallet.publicKeyHex,
+    amount,
+    privateKey: fromWallet.privateKeyPem,
   });
 
-  test('generated signature does not verify against a different transaction message', () => {
-    const fromWallet = generateTestWallet();
-    const toWallet = generateTestWallet();
-    const amount = 25;
-    const differentAmount = 50;
+  const secondTransaction = new Transaction(
+    fromWallet.publicKeyHex,
+    toWallet.publicKeyHex,
+    amount,
+  );
+  secondTransaction.signature = secondSignature;
 
-    const signature = signTransactionPayload({
-      fromAddress: fromWallet.publicKeyHex,
-      toAddress: toWallet.publicKeyHex,
-      amount,
-      privateKey: fromWallet.privateKeyPem,
-    });
+  assert.equal(secondTransaction.isValid(), true);
+});
 
-    const { Transaction } = require('../models/blockchain');
-    const transaction = new Transaction(
-      fromWallet.publicKeyHex,
-      toWallet.publicKeyHex,
-      differentAmount,
-    );
-    transaction.signature = signature;
+test('generated signature does not verify against a different transaction message', () => {
+  const fromWallet = generateTestWallet();
+  const toWallet = generateTestWallet();
+  const amount = 25;
+  const differentAmount = 50;
 
-    expect(transaction.isValid()).toBe(false);
+  const signature = signTransactionPayload({
+    fromAddress: fromWallet.publicKeyHex,
+    toAddress: toWallet.publicKeyHex,
+    amount,
+    privateKey: fromWallet.privateKeyPem,
   });
 
-  test('signTransactionPayload throws when private key is missing', () => {
-    const fromWallet = generateTestWallet();
-    const toWallet = generateTestWallet();
+  const { Transaction } = require('../models/blockchain');
+  const transaction = new Transaction(
+    fromWallet.publicKeyHex,
+    toWallet.publicKeyHex,
+    differentAmount,
+  );
+  transaction.signature = signature;
 
-    expect(() =>
+  assert.equal(transaction.isValid(), false);
+});
+
+test('signTransactionPayload throws when private key is missing', () => {
+  const fromWallet = generateTestWallet();
+  const toWallet = generateTestWallet();
+
+  assert.throws(
+    () =>
       signTransactionPayload({
         fromAddress: fromWallet.publicKeyHex,
         toAddress: toWallet.publicKeyHex,
         amount: 25,
       }),
-    ).toThrow('Private key is required to sign transaction payload');
-  });
+    /Private key is required to sign transaction payload/,
+  );
 });
