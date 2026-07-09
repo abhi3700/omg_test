@@ -1,8 +1,9 @@
-const { blockchain } = require('../models');
+const models = require('../models');
 const { sendSuccess, sendError } = require('../utils/response');
 const { isValidAddress, sanitizeAddress } = require('../utils/validator');
 
 const getBalance = (req, res) => {
+  const blockchain = models.blockchain;
   const address = sanitizeAddress(req.params.address);
 
   if (!isValidAddress(address)) {
